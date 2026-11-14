@@ -1,0 +1,54 @@
+# Render reads this file when you create a Blueprint. It describes two web services
+# built from this repository: the FastAPI back end and the Streamlit front end.
+#
+# "sync: false" means: the value is NOT in this file. You type it in the Render dashboard.
+# Never put a key or a password in this file.
+services:
+  # ---------------------------------------------------------------- back end
+  - type: web
+    name: tenk-analyst-api
+    runtime: python
+    plan: free
+    region: ohio                      # close to Neon (AWS US East 2)
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn backend.api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health          # Render calls this to see that the service is up. It costs nothing.
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: QDRANT_URL
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: QDRANT_COLLECTION        # the same collection name as in your .env (default: tenk)
+        sync: false
+      - key: NEON_DATABASE_URL
+        sync: false
+      - key: SEC_USER_AGENT
+        sync: false
+      - key: LANGSMITH_TRACING
+        value: "true"
+      - key: LANGSMITH_API_KEY        # a "Tracing Only" key can send traces but cannot read them
+        sync: false
+      - key: LANGSMITH_PROJECT
+        value: tenk-analyst
+      - key: ACCESS_CODE              # the same value as on the front end
+        sync: false
+
+  # ---------------------------------------------------------------- front end
+  - type: web
+    name: tenk-analyst-ui
+    runtime: python
+    plan: free
+    region: ohio
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m streamlit run frontend/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: API_URL                  # the back end's public address, for example https://tenk-analyst-api.onrender.com
+        sync: false
+      - key: ACCESS_CODE              # the same value as on the back end
+        sync: false
